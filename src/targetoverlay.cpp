@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QCursor>
+#include <QWindow>
 
 #include <LayerShellQt/Window>
 
@@ -151,6 +152,9 @@ void ScreenOverlay::setupLayerShell()
         create();
     }
 
+    // Bind window to specific screen before layer shell setup
+    windowHandle()->setScreen(m_screen);
+
     m_layerWindow = LayerShellQt::Window::get(windowHandle());
     if (m_layerWindow) {
         m_layerWindow->setLayer(LayerShellQt::Window::LayerOverlay);
@@ -165,9 +169,6 @@ void ScreenOverlay::setupLayerShell()
 
         m_layerWindow->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityOnDemand);
         m_layerWindow->setExclusiveZone(-1);
-
-        // Bind to this specific screen
-        m_layerWindow->setDesiredOutput(m_screen);
     }
 }
 
