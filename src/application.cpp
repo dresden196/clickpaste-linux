@@ -317,7 +317,7 @@ void Application::unregisterCancelHotkey()
         return;
     }
 
-    KGlobalAccel::removeAllShortcuts(m_cancelAction);
+    KGlobalAccel::setGlobalShortcut(m_cancelAction, QList<QKeySequence>());
     delete m_cancelAction;
     m_cancelAction = nullptr;
 }
