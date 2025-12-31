@@ -33,17 +33,47 @@ bool InputEmulator::initialize()
         return false;
     }
 
-    // Check if ydotoold system socket exists (systemd service running)
-    m_socketPath = QStringLiteral("/run/ydotool/socket");
-
-    if (!QFile::exists(m_socketPath)) {
-        Q_EMIT errorOccurred(QStringLiteral("ydotoold service not running. Please enable it:\n"
-                                            "  sudo systemctl enable --now ydotoold.service"));
-        return false;
+    // Strategy 1: Check for system socket (AUR/packaged install)
+    QString systemSocket = QStringLiteral("/run/ydotool/socket");
+    if (QFile::exists(systemSocket)) {
+        m_socketPath = systemSocket;
+        m_initialized = true;
+        qDebug() << "Using system ydotoold socket";
+        return true;
     }
 
-    m_initialized = true;
-    return true;
+    // Strategy 2: Fall back to user socket (development)
+    QString userSocket = QStringLiteral("/run/user/%1/.ydotool_socket").arg(getuid());
+
+    if (!QFile::exists(userSocket)) {
+        // Try to start ydotoold as user daemon
+        qDebug() << "Starting user ydotoold daemon for development...";
+
+        QProcess daemon;
+        daemon.setProgram(QStringLiteral("ydotoold"));
+        daemon.setArguments({QStringLiteral("--socket-path"), userSocket,
+                            QStringLiteral("--socket-perm"), QStringLiteral("0600")});
+        daemon.startDetached();
+
+        // Wait for it to start
+        QThread::msleep(500);
+    }
+
+    if (QFile::exists(userSocket)) {
+        m_socketPath = userSocket;
+        m_initialized = true;
+        qDebug() << "Using user ydotoold socket";
+        return true;
+    }
+
+    // Neither worked
+    Q_EMIT errorOccurred(QStringLiteral("Could not connect to ydotoold.\n\n"
+                                        "For development: Add yourself to 'input' group:\n"
+                                        "  sudo usermod -aG input $USER\n"
+                                        "  (then log out and back in)\n\n"
+                                        "For production: Enable the systemd service:\n"
+                                        "  sudo systemctl enable --now ydotoold.service"));
+    return false;
 }
 
 bool InputEmulator::isInitialized() const
