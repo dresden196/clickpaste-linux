@@ -64,14 +64,12 @@ cmake ..
 make
 ```
 
-#### Setup
+#### Setup (one-time)
 
 ```bash
-# Install and start the ydotoold systemd service
-sudo cp packaging/systemd/ydotoold.service /usr/lib/systemd/system/
-sudo cp packaging/systemd/ydotoold.conf /usr/lib/tmpfiles.d/
-sudo systemd-tmpfiles --create ydotoold.conf
-sudo systemctl enable --now ydotoold.service
+# Add yourself to the input group (required for ydotool)
+sudo usermod -aG input $USER
+# Log out and back in for the group change to take effect
 ```
 
 #### Run
@@ -79,6 +77,8 @@ sudo systemctl enable --now ydotoold.service
 ```bash
 ./bin/clickpaste
 ```
+
+The app automatically starts the ydotool daemon when needed - no manual service setup required for development.
 
 Or install system-wide:
 ```bash
