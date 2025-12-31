@@ -31,6 +31,7 @@ private:
     std::atomic<bool> m_cancelled;
     std::atomic<bool> m_typing;
     bool m_initialized;
+    QString m_socketPath;
 };
 
 #endif // INPUTEMULATOR_H

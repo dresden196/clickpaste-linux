@@ -18,7 +18,7 @@ This is a reverse-engineered port of [ClickPaste for Windows](https://github.com
 - **Adjustable Delays**: Configure start delay and per-keystroke delay
 - **Confirmation Dialog**: Optional confirmation for large text pastes
 - **Escape to Cancel**: Press Escape at any time to stop typing
-- **Auto-start daemon**: Automatically starts ydotoold when needed
+- **Systemd Integration**: ydotoold service auto-starts on boot
 
 ## Installation
 
@@ -37,11 +37,7 @@ cd clickpaste
 makepkg -si
 ```
 
-**After installation**, add yourself to the input group:
-```bash
-sudo usermod -aG input $USER
-# Then log out and back in
-```
+The ydotoold systemd service is automatically enabled and started during installation - no additional setup required!
 
 ### From Source
 
@@ -71,10 +67,11 @@ make
 #### Setup
 
 ```bash
-# Add yourself to the input group (required for ydotool)
-sudo usermod -aG input $USER
-
-# Log out and back in for the group change to take effect
+# Install and start the ydotoold systemd service
+sudo cp packaging/systemd/ydotoold.service /usr/lib/systemd/system/
+sudo cp packaging/systemd/ydotoold.conf /usr/lib/tmpfiles.d/
+sudo systemd-tmpfiles --create ydotoold.conf
+sudo systemctl enable --now ydotoold.service
 ```
 
 #### Run
@@ -127,21 +124,18 @@ ClickPaste uses:
 - **KGlobalAccel**: KDE's global hotkey system
 - **Layer Shell**: Wayland protocol for the targeting overlay
 
-The ydotoold daemon is automatically started when needed - no manual setup required beyond being in the `input` group.
+The ydotoold daemon runs as a systemd service and starts automatically on boot.
 
 ## Troubleshooting
 
-### "Could not start ydotoold" or input not working
+### "ydotoold service not running" or input not working
 
-Make sure you're in the `input` group:
+Make sure the ydotoold service is running:
 ```bash
-sudo usermod -aG input $USER
-# Then log out and back in
-```
+sudo systemctl status ydotoold.service
 
-Verify with:
-```bash
-groups | grep input
+# If not running, start it:
+sudo systemctl enable --now ydotoold.service
 ```
 
 ### Hotkey not working

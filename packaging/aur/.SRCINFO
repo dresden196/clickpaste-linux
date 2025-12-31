@@ -15,6 +15,7 @@ pkgbase = clickpaste
 	depends = ydotool
 	depends = wl-clipboard
 	optdepends = plasma-desktop: Full KDE Plasma integration
+	backup = usr/lib/systemd/system/ydotoold.service
 	source = clickpaste-1.0.0.tar.gz::https://github.com/dresden196/clickpaste-linux/archive/v1.0.0.tar.gz
 	sha256sums = SKIP
 

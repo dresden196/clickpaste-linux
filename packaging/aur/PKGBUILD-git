@@ -49,6 +49,7 @@ package() {
     # Install license
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
-    # Install .install file for post_install message
-    install -Dm644 packaging/aur/clickpaste.install "$pkgdir/usr/share/$pkgname/clickpaste.install"
+    # Install systemd service for ydotoold
+    install -Dm644 packaging/systemd/ydotoold.service "$pkgdir/usr/lib/systemd/system/ydotoold.service"
+    install -Dm644 packaging/systemd/ydotoold.conf "$pkgdir/usr/lib/tmpfiles.d/ydotoold.conf"
 }

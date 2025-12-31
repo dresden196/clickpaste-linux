@@ -3,8 +3,8 @@
 #include <QThread>
 #include <QDebug>
 #include <QProcess>
+#include <QProcessEnvironment>
 #include <QFile>
-#include <QStandardPaths>
 #include <unistd.h>
 
 InputEmulator::InputEmulator(QObject* parent)
@@ -33,27 +33,13 @@ bool InputEmulator::initialize()
         return false;
     }
 
-    // Check if ydotoold socket exists (daemon running)
-    QString socketPath = QStringLiteral("/run/user/%1/.ydotool_socket").arg(getuid());
+    // Check if ydotoold system socket exists (systemd service running)
+    m_socketPath = QStringLiteral("/run/ydotool/socket");
 
-    if (!QFile::exists(socketPath)) {
-        // Try to start ydotoold
-        qDebug() << "Starting ydotoold daemon...";
-
-        QProcess daemon;
-        daemon.setProgram(QStringLiteral("ydotoold"));
-        daemon.setArguments({QStringLiteral("--socket-path"), socketPath, QStringLiteral("--socket-perm"), QStringLiteral("0600")});
-        daemon.startDetached();
-
-        // Wait a moment for it to start
-        QThread::msleep(500);
-
-        if (!QFile::exists(socketPath)) {
-            Q_EMIT errorOccurred(QStringLiteral("Could not start ydotoold. Make sure you're in the 'input' group:\n"
-                                                "  sudo usermod -aG input $USER\n"
-                                                "Then log out and back in."));
-            return false;
-        }
+    if (!QFile::exists(m_socketPath)) {
+        Q_EMIT errorOccurred(QStringLiteral("ydotoold service not running. Please enable it:\n"
+                                            "  sudo systemctl enable --now ydotoold.service"));
+        return false;
     }
 
     m_initialized = true;
@@ -95,6 +81,12 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
     // Use ydotool for typing
     // ydotool type --key-delay <ms> "text"
     QProcess process;
+
+    // Set the socket path environment variable
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("YDOTOOL_SOCKET"), m_socketPath);
+    process.setProcessEnvironment(env);
+
     QStringList args;
     args << QStringLiteral("type");
 
@@ -115,7 +107,7 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
     if (process.exitCode() != 0) {
         QString error = QString::fromUtf8(process.readAllStandardError());
         if (error.isEmpty()) {
-            error = QStringLiteral("ydotool failed. Is ydotoold running? Try: sudo systemctl start ydotool");
+            error = QStringLiteral("ydotool failed. Is ydotoold running? Try: sudo systemctl start ydotoold");
         }
         Q_EMIT errorOccurred(error);
         m_typing = false;
