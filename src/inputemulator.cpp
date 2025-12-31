@@ -3,6 +3,9 @@
 #include <QThread>
 #include <QDebug>
 #include <QProcess>
+#include <QFile>
+#include <QStandardPaths>
+#include <unistd.h>
 
 InputEmulator::InputEmulator(QObject* parent)
     : QObject(parent)
@@ -23,15 +26,38 @@ bool InputEmulator::initialize()
     }
 
     // Check if ydotool is available
-    QProcess process;
-    process.start(QStringLiteral("which"), {QStringLiteral("ydotool")});
-    if (process.waitForFinished(1000) && process.exitCode() == 0) {
-        m_initialized = true;
-        return true;
+    QProcess which;
+    which.start(QStringLiteral("which"), {QStringLiteral("ydotool")});
+    if (!which.waitForFinished(1000) || which.exitCode() != 0) {
+        Q_EMIT errorOccurred(QStringLiteral("ydotool not found. Please install: sudo pacman -S ydotool"));
+        return false;
     }
 
-    Q_EMIT errorOccurred(QStringLiteral("ydotool not found. Install with: sudo pacman -S ydotool && sudo systemctl enable --now ydotool"));
-    return false;
+    // Check if ydotoold socket exists (daemon running)
+    QString socketPath = QStringLiteral("/run/user/%1/.ydotool_socket").arg(getuid());
+
+    if (!QFile::exists(socketPath)) {
+        // Try to start ydotoold
+        qDebug() << "Starting ydotoold daemon...";
+
+        QProcess daemon;
+        daemon.setProgram(QStringLiteral("ydotoold"));
+        daemon.setArguments({QStringLiteral("--socket-path"), socketPath, QStringLiteral("--socket-perm"), QStringLiteral("0600")});
+        daemon.startDetached();
+
+        // Wait a moment for it to start
+        QThread::msleep(500);
+
+        if (!QFile::exists(socketPath)) {
+            Q_EMIT errorOccurred(QStringLiteral("Could not start ydotoold. Make sure you're in the 'input' group:\n"
+                                                "  sudo usermod -aG input $USER\n"
+                                                "Then log out and back in."));
+            return false;
+        }
+    }
+
+    m_initialized = true;
+    return true;
 }
 
 bool InputEmulator::isInitialized() const
