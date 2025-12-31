@@ -5,6 +5,8 @@
 #include <QIcon>
 #include <QFile>
 #include <QSettings>
+#include <QPalette>
+#include <QApplication>
 
 TrayIcon::TrayIcon(QObject* parent)
     : QObject(parent)
@@ -81,21 +83,19 @@ void TrayIcon::updateIcon()
 
     switch (m_iconState) {
     case Normal:
+    case Targeting:
+        // Use light icon on dark themes, dark icon on light themes
         iconName = dark ? QStringLiteral(":/icons/clickpaste-dark.svg")
                         : QStringLiteral(":/icons/clickpaste.svg");
         break;
     case Typing:
         iconName = QStringLiteral(":/icons/clickpaste-typing.svg");
         break;
-    case Targeting:
-        iconName = dark ? QStringLiteral(":/icons/clickpaste-dark.svg")
-                        : QStringLiteral(":/icons/clickpaste.svg");
-        break;
     }
 
-    // Try to load from resources first, then fall back to theme
-    if (QFile::exists(iconName)) {
-        m_trayIcon->setIcon(QIcon(iconName));
+    QIcon icon(iconName);
+    if (!icon.isNull()) {
+        m_trayIcon->setIcon(icon);
     } else {
         // Fallback to a generic icon
         m_trayIcon->setIcon(QIcon::fromTheme(QStringLiteral("edit-paste")));
@@ -104,17 +104,13 @@ void TrayIcon::updateIcon()
 
 bool TrayIcon::isDarkTheme() const
 {
-    // Try to detect KDE Plasma color scheme
-    QSettings settings(QStringLiteral("kdeglobals"), QSettings::NativeFormat);
-    QString colorScheme = settings.value(QStringLiteral("General/ColorScheme")).toString();
+    // Check the window background color luminance
+    // This is the most reliable method across different desktops
+    QPalette palette = QApplication::palette();
+    QColor bg = palette.color(QPalette::Window);
 
-    // Check if it's a dark theme by name or check the window background
-    if (colorScheme.contains(QStringLiteral("Dark"), Qt::CaseInsensitive) ||
-        colorScheme.contains(QStringLiteral("Breeze Dark"), Qt::CaseInsensitive)) {
-        return true;
-    }
-
-    // Alternative: check background color luminance
-    // For now, default to light theme if we can't determine
-    return false;
+    // Calculate relative luminance
+    // Dark theme if background luminance is low
+    int luminance = (bg.red() * 299 + bg.green() * 587 + bg.blue() * 114) / 1000;
+    return luminance < 128;
 }

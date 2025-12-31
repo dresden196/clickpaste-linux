@@ -190,27 +190,19 @@ void ScreenOverlay::paintEvent(QPaintEvent* event)
 
     QPainter painter(this);
 
-    // Semi-transparent overlay
-    painter.fillRect(rect(), QColor(0, 0, 0, 30));
+    // Very subtle semi-transparent overlay - just enough to show targeting is active
+    painter.fillRect(rect(), QColor(0, 0, 0, 15));
 
-    // Crosshair at cursor position
-    if (!m_cursorPos.isNull()) {
-        painter.setPen(QPen(QColor(255, 100, 100), 2));
-        painter.drawLine(0, m_cursorPos.y(), width(), m_cursorPos.y());
-        painter.drawLine(m_cursorPos.x(), 0, m_cursorPos.x(), height());
-        painter.drawEllipse(m_cursorPos, 20, 20);
-    }
-
-    // Instruction text
+    // Instruction text at top
     painter.setPen(Qt::white);
     QFont font = painter.font();
-    font.setPointSize(14);
+    font.setPointSize(12);
     font.setBold(true);
     painter.setFont(font);
 
-    QString text = QStringLiteral("Click on the target window, or press Escape to cancel");
+    QString text = QStringLiteral("Click target window (ESC to cancel)");
     QRect textRect = painter.fontMetrics().boundingRect(text);
-    textRect.moveCenter(QPoint(width() / 2, 50));
+    textRect.moveCenter(QPoint(width() / 2, 30));
 
     QRect bgRect = textRect.adjusted(-10, -5, 10, 5);
     painter.fillRect(bgRect, QColor(0, 0, 0, 180));
