@@ -1,4 +1,4 @@
-# Maintainer: Your Name <your.email@example.com>
+# Maintainer: Dresden Wildey <your.email@example.com>
 pkgname=clickpaste-git
 pkgver=r1.0000000
 pkgrel=1
@@ -10,8 +10,8 @@ depends=(
     'qt6-base'
     'kglobalaccel'
     'layer-shell-qt'
-    'libei'
-    'xdg-desktop-portal-kde'
+    'ydotool'
+    'wl-clipboard'
 )
 makedepends=(
     'cmake'
@@ -24,16 +24,17 @@ optdepends=(
 )
 provides=('clickpaste')
 conflicts=('clickpaste')
+install=clickpaste.install
 source=("git+$url.git")
 sha256sums=('SKIP')
 
 pkgver() {
-    cd "${pkgname%-git}"
+    cd "clickpaste-linux"
     printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 build() {
-    cd "${pkgname%-git}"
+    cd "clickpaste-linux"
     cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -42,9 +43,12 @@ build() {
 }
 
 package() {
-    cd "${pkgname%-git}"
+    cd "clickpaste-linux"
     DESTDIR="$pkgdir" cmake --install build
 
     # Install license
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # Install .install file for post_install message
+    install -Dm644 packaging/aur/clickpaste.install "$pkgdir/usr/share/$pkgname/clickpaste.install"
 }

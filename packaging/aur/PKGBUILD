@@ -1,4 +1,4 @@
-# Maintainer: Your Name <your.email@example.com>
+# Maintainer: Dresden Wildey <your.email@example.com>
 pkgname=clickpaste
 pkgver=1.0.0
 pkgrel=1
@@ -10,8 +10,8 @@ depends=(
     'qt6-base'
     'kglobalaccel'
     'layer-shell-qt'
-    'libei'
-    'xdg-desktop-portal-kde'
+    'ydotool'
+    'wl-clipboard'
 )
 makedepends=(
     'cmake'
@@ -21,11 +21,12 @@ makedepends=(
 optdepends=(
     'plasma-desktop: Full KDE Plasma integration'
 )
+install=clickpaste.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 build() {
-    cd "$pkgname-$pkgver"
+    cd "$pkgname-linux-$pkgver"
     cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -34,7 +35,7 @@ build() {
 }
 
 package() {
-    cd "$pkgname-$pkgver"
+    cd "$pkgname-linux-$pkgver"
     DESTDIR="$pkgdir" cmake --install build
 
     # Install license

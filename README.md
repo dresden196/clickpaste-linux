@@ -4,7 +4,7 @@ A KDE Plasma/Wayland utility that pastes clipboard contents as simulated keystro
 
 ## About
 
-This is a reverse-engineered port of [ClickPaste for Windows](https://github.com/Collective-Software/ClickPaste) from C#/.NET to C++/Qt6. The original Windows application uses Win32 APIs and AutoIt for input simulation - this Linux version achieves the same functionality using native Wayland protocols (libei, Layer Shell) and KDE Frameworks.
+This is a reverse-engineered port of [ClickPaste for Windows](https://github.com/Collective-Software/ClickPaste) from C#/.NET to C++/Qt6. The original Windows application uses Win32 APIs and AutoIt for input simulation - this Linux version achieves the same functionality using ydotool (uinput), Layer Shell, and KDE Frameworks.
 
 **Primary use case**: Pasting text into applications that don't support traditional clipboard paste - such as KVM switches, remote desktop sessions, virtual machines, or legacy terminal applications that intercept Ctrl+V.
 
@@ -18,36 +18,7 @@ This is a reverse-engineered port of [ClickPaste for Windows](https://github.com
 - **Adjustable Delays**: Configure start delay and per-keystroke delay
 - **Confirmation Dialog**: Optional confirmation for large text pastes
 - **Escape to Cancel**: Press Escape at any time to stop typing
-
-## Requirements
-
-### Build Dependencies
-
-```bash
-# Fedora/RHEL
-sudo dnf install cmake extra-cmake-modules qt6-qtbase-devel kf6-kglobalaccel-devel layer-shell-qt-devel libei-devel
-
-# Arch Linux
-sudo pacman -S cmake extra-cmake-modules qt6-base kglobalaccel layer-shell-qt libei
-
-# Ubuntu/Debian (24.04+)
-sudo apt install cmake extra-cmake-modules qt6-base-dev libkf6globalaccel-dev layer-shell-qt-dev libei-dev
-```
-
-### Runtime Dependencies
-
-- KDE Plasma 6 (Wayland session)
-- xdg-desktop-portal-kde
-- PipeWire
-
-## Building
-
-```bash
-cd ~/Projects/clickpaste-linux
-mkdir build && cd build
-cmake ..
-make
-```
+- **Auto-start daemon**: Automatically starts ydotoold when needed
 
 ## Installation
 
@@ -66,22 +37,62 @@ cd clickpaste
 makepkg -si
 ```
 
-### From Source
-
+**After installation**, add yourself to the input group:
 ```bash
-sudo make install
+sudo usermod -aG input $USER
+# Then log out and back in
 ```
 
-Or run locally without installing:
+### From Source
+
+#### Dependencies
 
 ```bash
-./clickpaste
+# Arch Linux / CachyOS
+sudo pacman -S cmake extra-cmake-modules qt6-base kglobalaccel layer-shell-qt ydotool wl-clipboard
+
+# Fedora/RHEL
+sudo dnf install cmake extra-cmake-modules qt6-qtbase-devel kf6-kglobalaccel-devel layer-shell-qt-devel ydotool wl-clipboard
+
+# Ubuntu/Debian (24.04+)
+sudo apt install cmake extra-cmake-modules qt6-base-dev libkf6globalaccel-dev layer-shell-qt-dev ydotool wl-clipboard
+```
+
+#### Build
+
+```bash
+git clone https://github.com/dresden196/clickpaste-linux.git
+cd clickpaste-linux
+mkdir build && cd build
+cmake ..
+make
+```
+
+#### Setup
+
+```bash
+# Add yourself to the input group (required for ydotool)
+sudo usermod -aG input $USER
+
+# Log out and back in for the group change to take effect
+```
+
+#### Run
+
+```bash
+./bin/clickpaste
+```
+
+Or install system-wide:
+```bash
+sudo make install
+clickpaste
 ```
 
 ### Why not Flatpak?
 
 ClickPaste requires deep system integration that Flatpak's sandbox prevents:
-- **libei**: Input injection requires direct compositor access
+- **ydotool/uinput**: Input injection requires kernel-level access
 - **KGlobalAccel**: Global hotkeys need system-level registration
 - **Layer Shell**: Overlay windows require compositor protocols
 
@@ -109,20 +120,29 @@ Right-click the tray icon and select "Settings" to configure:
 
 ## How It Works
 
-On Wayland, ClickPaste uses:
+ClickPaste uses:
 
-- **libei**: Modern Wayland input emulation library for keystroke injection
+- **ydotool**: Input simulation via Linux uinput subsystem (works on any Wayland compositor)
+- **wl-clipboard**: Reliable clipboard access on Wayland
 - **KGlobalAccel**: KDE's global hotkey system
 - **Layer Shell**: Wayland protocol for the targeting overlay
-- **XDG Desktop Portal**: For permission management
+
+The ydotoold daemon is automatically started when needed - no manual setup required beyond being in the `input` group.
 
 ## Troubleshooting
 
-### "Failed to initialize input emulation"
+### "Could not start ydotoold" or input not working
 
-Your compositor must support libei. This requires:
-- KDE Plasma 6.0 or later
-- xdg-desktop-portal-kde installed and running
+Make sure you're in the `input` group:
+```bash
+sudo usermod -aG input $USER
+# Then log out and back in
+```
+
+Verify with:
+```bash
+groups | grep input
+```
 
 ### Hotkey not working
 
@@ -134,6 +154,13 @@ Your compositor must support libei. This requires:
 
 - Increase the key delay in Settings
 - Some applications may need longer delays to process input
+
+### Clipboard shows as empty
+
+Make sure `wl-clipboard` is installed:
+```bash
+sudo pacman -S wl-clipboard
+```
 
 ## License
 
