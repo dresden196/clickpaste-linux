@@ -17,6 +17,6 @@ pkgbase = clickpaste
 	optdepends = plasma-desktop: Full KDE Plasma integration
 	backup = usr/lib/systemd/system/ydotoold.service
 	source = clickpaste-1.0.0.tar.gz::https://github.com/dresden196/clickpaste-linux/archive/v1.0.0.tar.gz
-	sha256sums = SKIP
+	sha256sums = 9a779a1a7241b46f2600e2e82be69e6489449e7a932807092fdb17e67f7e2354
 
 pkgname = clickpaste

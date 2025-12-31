@@ -23,7 +23,7 @@ optdepends=(
 )
 install=clickpaste.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('9a779a1a7241b46f2600e2e82be69e6489449e7a932807092fdb17e67f7e2354')
 
 build() {
     cd "$pkgname-linux-$pkgver"
