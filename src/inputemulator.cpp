@@ -22,15 +22,15 @@ bool InputEmulator::initialize()
         return true;
     }
 
-    // Check if wtype is available
+    // Check if ydotool is available
     QProcess process;
-    process.start(QStringLiteral("which"), {QStringLiteral("wtype")});
+    process.start(QStringLiteral("which"), {QStringLiteral("ydotool")});
     if (process.waitForFinished(1000) && process.exitCode() == 0) {
         m_initialized = true;
         return true;
     }
 
-    Q_EMIT errorOccurred(QStringLiteral("wtype not found. Please install wtype: sudo pacman -S wtype"));
+    Q_EMIT errorOccurred(QStringLiteral("ydotool not found. Install with: sudo pacman -S ydotool && sudo systemctl enable --now ydotool"));
     return false;
 }
 
@@ -66,28 +66,34 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
         return;
     }
 
-    // Use wtype for typing
-    // For character-by-character with delays, we type one char at a time
+    // Use ydotool for typing
+    // ydotool type --key-delay <ms> "text"
+    QProcess process;
+    QStringList args;
+    args << QStringLiteral("type");
+
     if (keyDelayMs > 0) {
-        int total = text.length();
-        for (int i = 0; i < total && !m_cancelled; ++i) {
-            QString ch = text.mid(i, 1);
+        args << QStringLiteral("--key-delay") << QString::number(keyDelayMs);
+    }
 
-            QProcess process;
-            process.start(QStringLiteral("wtype"), {QStringLiteral("--"), ch});
-            process.waitForFinished(5000);
+    args << QStringLiteral("--") << text;
 
-            Q_EMIT typingProgress(i + 1, total);
+    process.start(QStringLiteral("ydotool"), args);
 
-            if (keyDelayMs > 0 && i < total - 1) {
-                QThread::msleep(keyDelayMs);
-            }
+    if (!process.waitForFinished(60000)) {
+        Q_EMIT errorOccurred(QStringLiteral("ydotool timed out"));
+        m_typing = false;
+        return;
+    }
+
+    if (process.exitCode() != 0) {
+        QString error = QString::fromUtf8(process.readAllStandardError());
+        if (error.isEmpty()) {
+            error = QStringLiteral("ydotool failed. Is ydotoold running? Try: sudo systemctl start ydotool");
         }
-    } else {
-        // Type all at once (faster)
-        QProcess process;
-        process.start(QStringLiteral("wtype"), {QStringLiteral("--"), text});
-        process.waitForFinished(30000);
+        Q_EMIT errorOccurred(error);
+        m_typing = false;
+        return;
     }
 
     m_typing = false;
