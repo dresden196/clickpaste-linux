@@ -13,8 +13,6 @@ int main(int argc, char* argv[])
 
     // Prefer Wayland but fall back to X11 if needed
     // Note: On pure Wayland, this is ignored
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
     QApplication app(argc, argv);
 
     // Don't quit when last window closes (we're a tray app)

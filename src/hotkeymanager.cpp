@@ -42,7 +42,7 @@ bool HotkeyManager::registerHotkey(const QString& key, Qt::KeyboardModifiers mod
     // Check if registration succeeded
     QList<QKeySequence> registeredShortcuts = KGlobalAccel::self()->globalShortcut(m_action);
     if (registeredShortcuts.isEmpty() || registeredShortcuts.first().isEmpty()) {
-        emit registrationFailed(QStringLiteral("Failed to register global hotkey. It may be in use by another application."));
+        Q_EMIT registrationFailed(QStringLiteral("Failed to register global hotkey. It may be in use by another application."));
         delete m_action;
         m_action = nullptr;
         m_registered = false;
@@ -81,6 +81,6 @@ bool HotkeyManager::isEnabled() const
 void HotkeyManager::onActionTriggered()
 {
     if (m_enabled) {
-        emit hotkeyTriggered();
+        Q_EMIT hotkeyTriggered();
     }
 }

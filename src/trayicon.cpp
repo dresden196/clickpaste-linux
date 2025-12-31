@@ -55,7 +55,7 @@ void TrayIcon::showMessage(const QString& title, const QString& message,
 void TrayIcon::onActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
-        emit activated();
+        Q_EMIT activated();
     }
 }
 

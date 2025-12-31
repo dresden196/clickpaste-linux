@@ -55,7 +55,7 @@ bool InputEmulator::connectToEI()
     );
 
     if (!portal.isValid()) {
-        emit errorOccurred(QStringLiteral("Cannot connect to XDG Desktop Portal"));
+        Q_EMIT errorOccurred(QStringLiteral("Cannot connect to XDG Desktop Portal"));
         return false;
     }
 
@@ -64,7 +64,7 @@ bool InputEmulator::connectToEI()
 
     m_ei = ei_new(nullptr);
     if (!m_ei) {
-        emit errorOccurred(QStringLiteral("Failed to create libei context"));
+        Q_EMIT errorOccurred(QStringLiteral("Failed to create libei context"));
         return false;
     }
 
@@ -72,7 +72,7 @@ bool InputEmulator::connectToEI()
     // The compositor should provide this via the portal
     int ret = ei_setup_backend_socket(m_ei, nullptr);
     if (ret != 0) {
-        emit errorOccurred(QStringLiteral("Failed to connect to EI backend. Ensure your compositor supports libei."));
+        Q_EMIT errorOccurred(QStringLiteral("Failed to connect to EI backend. Ensure your compositor supports libei."));
         ei_unref(m_ei);
         m_ei = nullptr;
         return false;
@@ -108,7 +108,7 @@ bool InputEmulator::connectToEI()
                     }
                 }
                 else if (type == EI_EVENT_DISCONNECT) {
-                    emit errorOccurred(QStringLiteral("Disconnected from EI server"));
+                    Q_EMIT errorOccurred(QStringLiteral("Disconnected from EI server"));
                     ei_event_unref(event);
                     return false;
                 }
@@ -124,7 +124,7 @@ bool InputEmulator::connectToEI()
     }
 
     if (!m_keyboard) {
-        emit errorOccurred(QStringLiteral("Timeout waiting for keyboard device from EI"));
+        Q_EMIT errorOccurred(QStringLiteral("Timeout waiting for keyboard device from EI"));
         return false;
     }
 
@@ -165,18 +165,18 @@ void InputEmulator::destroyKeyboard()
 void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelayMs)
 {
     if (!m_initialized || !m_keyboard) {
-        emit errorOccurred(QStringLiteral("Input emulator not initialized"));
+        Q_EMIT errorOccurred(QStringLiteral("Input emulator not initialized"));
         return;
     }
 
     if (text.isEmpty()) {
-        emit errorOccurred(QStringLiteral("No text to type"));
+        Q_EMIT errorOccurred(QStringLiteral("No text to type"));
         return;
     }
 
     m_cancelled = false;
     m_typing = true;
-    emit typingStarted();
+    Q_EMIT typingStarted();
 
     // Start delay
     if (startDelayMs > 0) {
@@ -185,7 +185,7 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
 
     if (m_cancelled) {
         m_typing = false;
-        emit typingCancelled();
+        Q_EMIT typingCancelled();
         return;
     }
 
@@ -221,7 +221,7 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
             ei_dispatch(m_ei);
         }
 
-        emit typingProgress(i + 1, total);
+        Q_EMIT typingProgress(i + 1, total);
 
         // Delay between keys
         if (keyDelayMs > 0 && i < total - 1) {
@@ -234,9 +234,9 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
     m_typing = false;
 
     if (m_cancelled) {
-        emit typingCancelled();
+        Q_EMIT typingCancelled();
     } else {
-        emit typingFinished();
+        Q_EMIT typingFinished();
     }
 }
 

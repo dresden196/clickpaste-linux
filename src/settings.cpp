@@ -25,7 +25,7 @@ void Settings::setKeyDelayMs(int ms)
 {
     if (keyDelayMs() != ms) {
         m_settings.setValue(QStringLiteral("keyDelayMs"), ms);
-        emit settingsChanged();
+        Q_EMIT settingsChanged();
     }
 }
 
@@ -38,7 +38,7 @@ void Settings::setStartDelayMs(int ms)
 {
     if (startDelayMs() != ms) {
         m_settings.setValue(QStringLiteral("startDelayMs"), ms);
-        emit settingsChanged();
+        Q_EMIT settingsChanged();
     }
 }
 
@@ -51,7 +51,7 @@ void Settings::setConfirmEnabled(bool enabled)
 {
     if (confirmEnabled() != enabled) {
         m_settings.setValue(QStringLiteral("confirmEnabled"), enabled);
-        emit settingsChanged();
+        Q_EMIT settingsChanged();
     }
 }
 
@@ -64,7 +64,7 @@ void Settings::setConfirmThreshold(int chars)
 {
     if (confirmThreshold() != chars) {
         m_settings.setValue(QStringLiteral("confirmThreshold"), chars);
-        emit settingsChanged();
+        Q_EMIT settingsChanged();
     }
 }
 
@@ -77,7 +77,7 @@ void Settings::setHotkey(const QString& key)
 {
     if (hotkey() != key) {
         m_settings.setValue(QStringLiteral("hotkey"), key);
-        emit hotkeyChanged();
+        Q_EMIT hotkeyChanged();
     }
 }
 
@@ -92,7 +92,7 @@ void Settings::setHotkeyModifiers(Qt::KeyboardModifiers mods)
 {
     if (hotkeyModifiers() != mods) {
         m_settings.setValue(QStringLiteral("hotkeyModifiers"), static_cast<int>(mods));
-        emit hotkeyChanged();
+        Q_EMIT hotkeyChanged();
     }
 }
 
@@ -105,7 +105,7 @@ void Settings::setHotkeyMode(HotkeyMode mode)
 {
     if (hotkeyMode() != mode) {
         m_settings.setValue(QStringLiteral("hotkeyMode"), static_cast<int>(mode));
-        emit settingsChanged();
+        Q_EMIT settingsChanged();
     }
 }
 

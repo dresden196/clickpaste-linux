@@ -156,7 +156,7 @@ void TargetOverlay::mouseReleaseEvent(QMouseEvent* event)
         deactivate();
 
         // Small delay to allow the underlying window to receive focus
-        emit targetSelected(globalPos);
+        Q_EMIT targetSelected(globalPos);
     }
 }
 
@@ -170,6 +170,6 @@ void TargetOverlay::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Escape) {
         deactivate();
-        emit cancelled();
+        Q_EMIT cancelled();
     }
 }
