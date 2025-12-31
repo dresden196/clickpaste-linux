@@ -236,6 +236,20 @@ void ScreenOverlay::mouseMoveEvent(QMouseEvent* event)
     update();
 }
 
+void ScreenOverlay::enterEvent(QEnterEvent* event)
+{
+    Q_UNUSED(event)
+    // Cursor entered this screen - will be updated by mouseMoveEvent
+}
+
+void ScreenOverlay::leaveEvent(QEvent* event)
+{
+    Q_UNUSED(event)
+    // Clear crosshair when cursor leaves this screen
+    m_cursorPos = QPoint();
+    update();
+}
+
 void ScreenOverlay::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Escape) {
