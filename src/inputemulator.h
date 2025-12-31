@@ -5,6 +5,8 @@
 #include <QString>
 #include <atomic>
 
+class QProcess;
+
 class InputEmulator : public QObject
 {
     Q_OBJECT
@@ -32,6 +34,7 @@ private:
     std::atomic<bool> m_typing;
     bool m_initialized;
     QString m_socketPath;
+    QProcess* m_currentProcess;
 };
 
 #endif // INPUTEMULATOR_H

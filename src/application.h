@@ -4,6 +4,7 @@
 #include <QObject>
 #include <memory>
 
+class QAction;
 class TrayIcon;
 class HotkeyManager;
 class InputEmulator;
@@ -46,6 +47,8 @@ private:
     bool showConfirmationDialog(const QString& text);
 
     void registerHotkey();
+    void registerCancelHotkey();
+    void unregisterCancelHotkey();
 
     std::unique_ptr<QLockFile> m_lockFile;
     std::unique_ptr<TrayIcon> m_trayIcon;
@@ -53,6 +56,7 @@ private:
     std::unique_ptr<InputEmulator> m_inputEmulator;
     std::unique_ptr<TargetOverlay> m_targetOverlay;
     std::unique_ptr<ClipboardManager> m_clipboardManager;
+    QAction* m_cancelAction;
 };
 
 #endif // APPLICATION_H

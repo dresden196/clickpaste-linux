@@ -14,9 +14,12 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QDebug>
+#include <QAction>
+#include <KGlobalAccel>
 
 Application::Application(QObject* parent)
     : QObject(parent)
+    , m_cancelAction(nullptr)
 {
 }
 
@@ -247,16 +250,19 @@ void Application::onTypingStarted()
 {
     m_trayIcon->setIconState(TrayIcon::Typing);
     m_hotkeyManager->setEnabled(false);
+    registerCancelHotkey();
 }
 
 void Application::onTypingFinished()
 {
+    unregisterCancelHotkey();
     m_trayIcon->setIconState(TrayIcon::Normal);
     m_hotkeyManager->setEnabled(true);
 }
 
 void Application::onTypingCancelled()
 {
+    unregisterCancelHotkey();
     m_trayIcon->setIconState(TrayIcon::Normal);
     m_hotkeyManager->setEnabled(true);
     m_trayIcon->showMessage(QStringLiteral("ClickPaste"),
@@ -266,6 +272,7 @@ void Application::onTypingCancelled()
 
 void Application::onTypingError(const QString& error)
 {
+    unregisterCancelHotkey();
     m_trayIcon->setIconState(TrayIcon::Normal);
     m_hotkeyManager->setEnabled(true);
     m_trayIcon->showMessage(QStringLiteral("ClickPaste Error"),
@@ -282,4 +289,35 @@ void Application::registerHotkey()
 {
     Settings* s = Settings::instance();
     m_hotkeyManager->registerHotkey(s->hotkey(), s->hotkeyModifiers());
+}
+
+void Application::registerCancelHotkey()
+{
+    if (m_cancelAction) {
+        return; // Already registered
+    }
+
+    m_cancelAction = new QAction(this);
+    m_cancelAction->setObjectName(QStringLiteral("clickpaste_cancel"));
+    m_cancelAction->setText(QStringLiteral("Cancel ClickPaste"));
+
+    connect(m_cancelAction, &QAction::triggered, this, [this]() {
+        if (m_inputEmulator && m_inputEmulator->isTyping()) {
+            m_inputEmulator->cancel();
+        }
+    });
+
+    KGlobalAccel::setGlobalShortcut(m_cancelAction,
+                                     QList<QKeySequence>() << QKeySequence(Qt::Key_Escape));
+}
+
+void Application::unregisterCancelHotkey()
+{
+    if (!m_cancelAction) {
+        return;
+    }
+
+    KGlobalAccel::removeAllShortcuts(m_cancelAction);
+    delete m_cancelAction;
+    m_cancelAction = nullptr;
 }

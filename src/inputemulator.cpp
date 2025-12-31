@@ -12,11 +12,13 @@ InputEmulator::InputEmulator(QObject* parent)
     , m_cancelled(false)
     , m_typing(false)
     , m_initialized(false)
+    , m_currentProcess(nullptr)
 {
 }
 
 InputEmulator::~InputEmulator()
 {
+    cancel();
 }
 
 bool InputEmulator::initialize()
@@ -110,12 +112,12 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
 
     // Use ydotool for typing
     // ydotool type --key-delay <ms> "text"
-    QProcess process;
+    m_currentProcess = new QProcess(this);
 
     // Set the socket path environment variable
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("YDOTOOL_SOCKET"), m_socketPath);
-    process.setProcessEnvironment(env);
+    m_currentProcess->setProcessEnvironment(env);
 
     QStringList args;
     args << QStringLiteral("type");
@@ -126,28 +128,32 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
 
     args << QStringLiteral("--") << text;
 
-    process.start(QStringLiteral("ydotool"), args);
+    m_currentProcess->start(QStringLiteral("ydotool"), args);
 
-    if (!process.waitForFinished(60000)) {
-        Q_EMIT errorOccurred(QStringLiteral("ydotool timed out"));
-        m_typing = false;
-        return;
-    }
-
-    if (process.exitCode() != 0) {
-        QString error = QString::fromUtf8(process.readAllStandardError());
-        if (error.isEmpty()) {
-            error = QStringLiteral("ydotool failed. Is ydotoold running? Try: sudo systemctl start ydotoold");
+    // Poll for completion, checking for cancellation
+    while (!m_currentProcess->waitForFinished(100)) {
+        if (m_cancelled) {
+            m_currentProcess->kill();
+            m_currentProcess->waitForFinished(1000);
+            break;
         }
-        Q_EMIT errorOccurred(error);
-        m_typing = false;
-        return;
     }
 
+    bool wasCancelled = m_cancelled;
+    int exitCode = m_currentProcess->exitCode();
+    QString errorOutput = QString::fromUtf8(m_currentProcess->readAllStandardError());
+
+    delete m_currentProcess;
+    m_currentProcess = nullptr;
     m_typing = false;
 
-    if (m_cancelled) {
+    if (wasCancelled) {
         Q_EMIT typingCancelled();
+    } else if (exitCode != 0) {
+        if (errorOutput.isEmpty()) {
+            errorOutput = QStringLiteral("ydotool failed. Is ydotoold running? Try: sudo systemctl start ydotoold");
+        }
+        Q_EMIT errorOccurred(errorOutput);
     } else {
         Q_EMIT typingFinished();
     }
@@ -156,6 +162,9 @@ void InputEmulator::typeText(const QString& text, int keyDelayMs, int startDelay
 void InputEmulator::cancel()
 {
     m_cancelled = true;
+    if (m_currentProcess && m_currentProcess->state() != QProcess::NotRunning) {
+        m_currentProcess->kill();
+    }
 }
 
 bool InputEmulator::isTyping() const
