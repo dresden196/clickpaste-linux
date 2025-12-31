@@ -45,7 +45,7 @@ public:
 
     void sync();
 
-signals:
+Q_SIGNALS:
     void settingsChanged();
     void hotkeyChanged();
 

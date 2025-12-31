@@ -24,7 +24,7 @@ public:
     void cancel();
     bool isTyping() const;
 
-signals:
+Q_SIGNALS:
     void typingStarted();
     void typingProgress(int current, int total);
     void typingFinished();

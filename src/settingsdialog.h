@@ -17,7 +17,7 @@ public:
     explicit SettingsDialog(QWidget* parent = nullptr);
     ~SettingsDialog() = default;
 
-private slots:
+private Q_SLOTS:
     void loadSettings();
     void saveSettings();
     void onHotkeyKeyPress();

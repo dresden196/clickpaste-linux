@@ -28,12 +28,12 @@ public:
     void showMessage(const QString& title, const QString& message,
                      QSystemTrayIcon::MessageIcon icon = QSystemTrayIcon::Information);
 
-signals:
+Q_SIGNALS:
     void activated();
     void settingsRequested();
     void exitRequested();
 
-private slots:
+private Q_SLOTS:
     void onActivated(QSystemTrayIcon::ActivationReason reason);
 
 private:

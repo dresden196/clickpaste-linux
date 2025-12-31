@@ -23,7 +23,7 @@ public:
     bool initialize();
     void shutdown();
 
-private slots:
+private Q_SLOTS:
     void onTrayActivated();
     void onSettingsRequested();
     void onExitRequested();

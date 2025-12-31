@@ -20,7 +20,7 @@ public:
     void deactivate();
     bool isActive() const;
 
-signals:
+Q_SIGNALS:
     void targetSelected(const QPoint& globalPos);
     void cancelled();
 

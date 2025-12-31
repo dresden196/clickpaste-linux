@@ -22,11 +22,11 @@ public:
     void setEnabled(bool enabled);
     bool isEnabled() const;
 
-signals:
+Q_SIGNALS:
     void hotkeyTriggered();
     void registrationFailed(const QString& reason);
 
-private slots:
+private Q_SLOTS:
     void onActionTriggered();
 
 private:
