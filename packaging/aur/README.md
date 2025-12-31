@@ -10,19 +10,15 @@ This directory contains the PKGBUILD for submitting ClickPaste to the Arch User 
 
 ## Before Submitting to AUR
 
-1. **Update URLs** in PKGBUILD and .SRCINFO:
-   - Replace `YourUsername` with your actual GitHub username
-   - Update maintainer email
+1. **Create a GitHub release** with a tag (e.g., `v1.0.0`)
 
-2. **Create a GitHub release** with a tag (e.g., `v1.0.0`)
-
-3. **Update sha256sums**:
+2. **Update sha256sums**:
    ```bash
    # Download the release tarball and generate checksum
-   curl -L https://github.com/YourUsername/clickpaste-linux/archive/v1.0.0.tar.gz | sha256sum
+   curl -L https://github.com/dresden196/clickpaste-linux/archive/v1.0.0.tar.gz | sha256sum
    ```
 
-4. **Regenerate .SRCINFO**:
+3. **Regenerate .SRCINFO**:
    ```bash
    makepkg --printsrcinfo > .SRCINFO
    ```

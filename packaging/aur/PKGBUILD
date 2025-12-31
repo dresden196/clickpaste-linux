@@ -4,7 +4,7 @@ pkgver=1.0.0
 pkgrel=1
 pkgdesc="Paste clipboard contents as simulated keystrokes - for KVMs, VMs, and restricted applications"
 arch=('x86_64')
-url="https://github.com/YourUsername/clickpaste-linux"
+url="https://github.com/dresden196/clickpaste-linux"
 license=('BSD-3-Clause')
 depends=(
     'qt6-base'
