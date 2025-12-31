@@ -8,7 +8,6 @@
 #include <QCursor>
 
 #include <LayerShellQt/Window>
-#include <LayerShellQt/Shell>
 
 TargetOverlay::TargetOverlay(QWidget* parent)
     : QWidget(parent, Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint)
@@ -64,11 +63,9 @@ bool TargetOverlay::isActive() const
 
 void TargetOverlay::setupLayerShell()
 {
-    // Initialize Layer Shell for Wayland
-    if (!LayerShellQt::Shell::isInitialized()) {
-        // Layer Shell not available - we're probably not on Wayland
-        // Fall back to regular window behavior
-        return;
+    // Need to create the window handle first
+    if (!windowHandle()) {
+        create();
     }
 
     m_layerWindow = LayerShellQt::Window::get(windowHandle());
@@ -77,10 +74,12 @@ void TargetOverlay::setupLayerShell()
         m_layerWindow->setLayer(LayerShellQt::Window::LayerOverlay);
 
         // Set anchors to all edges to cover the full screen
-        m_layerWindow->setAnchors(LayerShellQt::Window::AnchorTop |
-                                   LayerShellQt::Window::AnchorBottom |
-                                   LayerShellQt::Window::AnchorLeft |
-                                   LayerShellQt::Window::AnchorRight);
+        LayerShellQt::Window::Anchors anchors;
+        anchors.setFlag(LayerShellQt::Window::AnchorTop);
+        anchors.setFlag(LayerShellQt::Window::AnchorBottom);
+        anchors.setFlag(LayerShellQt::Window::AnchorLeft);
+        anchors.setFlag(LayerShellQt::Window::AnchorRight);
+        m_layerWindow->setAnchors(anchors);
 
         // Request keyboard interactivity so we can receive Escape key
         m_layerWindow->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityOnDemand);
