@@ -30,6 +30,8 @@ Q_SIGNALS:
     void errorOccurred(const QString& error);
 
 private:
+    void releaseAllKeys();
+
     std::atomic<bool> m_cancelled;
     std::atomic<bool> m_typing;
     bool m_initialized;

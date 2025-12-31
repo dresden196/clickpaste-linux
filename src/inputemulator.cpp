@@ -164,7 +164,36 @@ void InputEmulator::cancel()
     m_cancelled = true;
     if (m_currentProcess && m_currentProcess->state() != QProcess::NotRunning) {
         m_currentProcess->kill();
+        m_currentProcess->waitForFinished(500);
+
+        // Release any stuck keys by sending key releases for common keys
+        // This fixes keys getting "stuck" when killed mid-keystroke
+        releaseAllKeys();
     }
+}
+
+void InputEmulator::releaseAllKeys()
+{
+    // Use ydotool to release modifier keys and spacebar that might be stuck
+    // Key codes: 42=LShift, 54=RShift, 29=LCtrl, 97=RCtrl, 56=LAlt, 100=RAlt, 57=Space
+    QProcess release;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert(QStringLiteral("YDOTOOL_SOCKET"), m_socketPath);
+    release.setProcessEnvironment(env);
+
+    // Send key-up events for common stuck keys
+    release.start(QStringLiteral("ydotool"), {
+        QStringLiteral("key"),
+        QStringLiteral("42:0"),  // LShift up
+        QStringLiteral("54:0"),  // RShift up
+        QStringLiteral("29:0"),  // LCtrl up
+        QStringLiteral("97:0"),  // RCtrl up
+        QStringLiteral("56:0"),  // LAlt up
+        QStringLiteral("100:0"), // RAlt up
+        QStringLiteral("57:0"),  // Space up
+        QStringLiteral("125:0"), // Super up
+    });
+    release.waitForFinished(1000);
 }
 
 bool InputEmulator::isTyping() const
