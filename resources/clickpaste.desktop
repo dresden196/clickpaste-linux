@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ClickPaste
+GenericName=Clipboard Typing Utility
+Comment=Paste clipboard contents as simulated keystrokes
+Exec=clickpaste
+Icon=clickpaste
+Terminal=false
+Categories=Utility;
+Keywords=clipboard;paste;typing;keyboard;automation;
+StartupNotify=false
+X-KDE-autostart-condition=true

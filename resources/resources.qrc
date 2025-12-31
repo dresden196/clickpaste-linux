@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>icons/clickpaste.svg</file>
+        <file>icons/clickpaste-dark.svg</file>
+        <file>icons/clickpaste-typing.svg</file>
+    </qresource>
+</RCC>

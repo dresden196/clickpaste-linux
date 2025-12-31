@@ -1,0 +1,42 @@
+# Maintainer: Your Name <your.email@example.com>
+pkgname=clickpaste
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Paste clipboard contents as simulated keystrokes - for KVMs, VMs, and restricted applications"
+arch=('x86_64')
+url="https://github.com/YourUsername/clickpaste-linux"
+license=('BSD-3-Clause')
+depends=(
+    'qt6-base'
+    'kglobalaccel'
+    'layer-shell-qt'
+    'libei'
+    'xdg-desktop-portal-kde'
+)
+makedepends=(
+    'cmake'
+    'extra-cmake-modules'
+    'qt6-tools'
+)
+optdepends=(
+    'plasma-desktop: Full KDE Plasma integration'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+    cmake -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -Wno-dev
+    cmake --build build
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    DESTDIR="$pkgdir" cmake --install build
+
+    # Install license
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

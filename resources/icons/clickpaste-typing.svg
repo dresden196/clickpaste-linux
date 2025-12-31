@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Typing indicator icon for ClickPaste -->
+  <!-- Keyboard-like design with animated appearance -->
+  <rect x="4" y="16" width="40" height="24" rx="3" ry="3" fill="none" stroke="#4CAF50" stroke-width="2"/>
+  <!-- Key rows -->
+  <rect x="8" y="20" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="16" y="20" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="24" y="20" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="32" y="20" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="10" y="26" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="18" y="26" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <rect x="26" y="26" width="6" height="4" rx="1" fill="#4CAF50"/>
+  <!-- Space bar -->
+  <rect x="14" y="32" width="20" height="4" rx="1" fill="#4CAF50"/>
+  <!-- Activity indicator dots -->
+  <circle cx="12" cy="8" r="3" fill="#4CAF50" opacity="0.5"/>
+  <circle cx="24" cy="8" r="3" fill="#4CAF50" opacity="0.75"/>
+  <circle cx="36" cy="8" r="3" fill="#4CAF50"/>
+</svg>
