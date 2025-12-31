@@ -9,21 +9,29 @@
 
 #include <LayerShellQt/Window>
 
-TargetOverlay::TargetOverlay(QWidget* parent)
-    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint)
-    , m_layerWindow(nullptr)
+// ============================================================================
+// TargetOverlay - manages overlays across all screens
+// ============================================================================
+
+TargetOverlay::TargetOverlay(QObject* parent)
+    : QObject(parent)
     , m_active(false)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_ShowWithoutActivating);
-    setMouseTracking(true);
+    // Create overlays for existing screens
+    const auto screens = QGuiApplication::screens();
+    for (QScreen* screen : screens) {
+        createOverlayForScreen(screen);
+    }
 
-    // Set crosshair cursor
-    setCursor(Qt::CrossCursor);
+    // Handle dynamic screen changes
+    connect(qApp, &QGuiApplication::screenAdded, this, &TargetOverlay::onScreenAdded);
+    connect(qApp, &QGuiApplication::screenRemoved, this, &TargetOverlay::onScreenRemoved);
 }
 
 TargetOverlay::~TargetOverlay()
 {
+    qDeleteAll(m_overlays);
+    m_overlays.clear();
 }
 
 void TargetOverlay::activate()
@@ -34,16 +42,9 @@ void TargetOverlay::activate()
 
     m_active = true;
 
-    // Get the primary screen geometry
-    QScreen* screen = QGuiApplication::primaryScreen();
-    if (screen) {
-        setGeometry(screen->geometry());
+    for (ScreenOverlay* overlay : m_overlays) {
+        overlay->activate();
     }
-
-    setupLayerShell();
-    show();
-    raise();
-    setFocus();
 }
 
 void TargetOverlay::deactivate()
@@ -53,7 +54,10 @@ void TargetOverlay::deactivate()
     }
 
     m_active = false;
-    hide();
+
+    for (ScreenOverlay* overlay : m_overlays) {
+        overlay->deactivate();
+    }
 }
 
 bool TargetOverlay::isActive() const
@@ -61,19 +65,97 @@ bool TargetOverlay::isActive() const
     return m_active;
 }
 
-void TargetOverlay::setupLayerShell()
+void TargetOverlay::onScreenAdded(QScreen* screen)
 {
-    // Need to create the window handle first
+    createOverlayForScreen(screen);
+    if (m_active) {
+        m_overlays.last()->activate();
+    }
+}
+
+void TargetOverlay::onScreenRemoved(QScreen* screen)
+{
+    removeOverlayForScreen(screen);
+}
+
+void TargetOverlay::onOverlayClicked(const QPoint& globalPos)
+{
+    deactivate();
+    Q_EMIT targetSelected(globalPos);
+}
+
+void TargetOverlay::onOverlayCancelled()
+{
+    deactivate();
+    Q_EMIT cancelled();
+}
+
+void TargetOverlay::createOverlayForScreen(QScreen* screen)
+{
+    auto* overlay = new ScreenOverlay(screen);
+    connect(overlay, &ScreenOverlay::clicked, this, &TargetOverlay::onOverlayClicked);
+    connect(overlay, &ScreenOverlay::cancelled, this, &TargetOverlay::onOverlayCancelled);
+    m_overlays.append(overlay);
+}
+
+void TargetOverlay::removeOverlayForScreen(QScreen* screen)
+{
+    for (int i = 0; i < m_overlays.size(); ++i) {
+        if (m_overlays[i]->screen() == screen) {
+            delete m_overlays.takeAt(i);
+            return;
+        }
+    }
+}
+
+// ============================================================================
+// ScreenOverlay - per-screen overlay widget
+// ============================================================================
+
+ScreenOverlay::ScreenOverlay(QScreen* screen, QWidget* parent)
+    : QWidget(parent, Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint)
+    , m_screen(screen)
+    , m_layerWindow(nullptr)
+{
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+    setMouseTracking(true);
+    setCursor(Qt::CrossCursor);
+
+    // Set geometry to match screen
+    setGeometry(screen->geometry());
+}
+
+ScreenOverlay::~ScreenOverlay()
+{
+}
+
+void ScreenOverlay::activate()
+{
+    // Update geometry in case screen changed
+    setGeometry(m_screen->geometry());
+    setupLayerShell();
+    show();
+    raise();
+    setFocus();
+}
+
+void ScreenOverlay::deactivate()
+{
+    hide();
+}
+
+void ScreenOverlay::setupLayerShell()
+{
     if (!windowHandle()) {
         create();
     }
 
     m_layerWindow = LayerShellQt::Window::get(windowHandle());
     if (m_layerWindow) {
-        // Set the layer to overlay (topmost)
         m_layerWindow->setLayer(LayerShellQt::Window::LayerOverlay);
 
-        // Set anchors to all edges to cover the full screen
+        // Anchor to all edges of this screen
         LayerShellQt::Window::Anchors anchors;
         anchors.setFlag(LayerShellQt::Window::AnchorTop);
         anchors.setFlag(LayerShellQt::Window::AnchorBottom);
@@ -81,50 +163,44 @@ void TargetOverlay::setupLayerShell()
         anchors.setFlag(LayerShellQt::Window::AnchorRight);
         m_layerWindow->setAnchors(anchors);
 
-        // Request keyboard interactivity so we can receive Escape key
         m_layerWindow->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityOnDemand);
-
-        // Exclusive zone of -1 means we don't reserve any space
         m_layerWindow->setExclusiveZone(-1);
+
+        // Bind to this specific screen
+        m_layerWindow->setDesiredOutput(m_screen);
     }
 }
 
-void TargetOverlay::showEvent(QShowEvent* event)
+void ScreenOverlay::showEvent(QShowEvent* event)
 {
     QWidget::showEvent(event);
     grabKeyboard();
 }
 
-void TargetOverlay::hideEvent(QHideEvent* event)
+void ScreenOverlay::hideEvent(QHideEvent* event)
 {
     releaseKeyboard();
     QWidget::hideEvent(event);
 }
 
-void TargetOverlay::paintEvent(QPaintEvent* event)
+void ScreenOverlay::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
 
     QPainter painter(this);
 
-    // Draw a semi-transparent overlay
+    // Semi-transparent overlay
     painter.fillRect(rect(), QColor(0, 0, 0, 30));
 
-    // Draw crosshair at cursor position
+    // Crosshair at cursor position
     if (!m_cursorPos.isNull()) {
         painter.setPen(QPen(QColor(255, 100, 100), 2));
-
-        // Horizontal line
         painter.drawLine(0, m_cursorPos.y(), width(), m_cursorPos.y());
-
-        // Vertical line
         painter.drawLine(m_cursorPos.x(), 0, m_cursorPos.x(), height());
-
-        // Circle at center
         painter.drawEllipse(m_cursorPos, 20, 20);
     }
 
-    // Draw instruction text
+    // Instruction text
     painter.setPen(Qt::white);
     QFont font = painter.font();
     font.setPointSize(14);
@@ -135,40 +211,33 @@ void TargetOverlay::paintEvent(QPaintEvent* event)
     QRect textRect = painter.fontMetrics().boundingRect(text);
     textRect.moveCenter(QPoint(width() / 2, 50));
 
-    // Draw text background
     QRect bgRect = textRect.adjusted(-10, -5, 10, 5);
     painter.fillRect(bgRect, QColor(0, 0, 0, 180));
     painter.drawText(textRect, Qt::AlignCenter, text);
 }
 
-void TargetOverlay::mousePressEvent(QMouseEvent* event)
+void ScreenOverlay::mousePressEvent(QMouseEvent* event)
 {
-    // We capture the click but wait for release
     m_cursorPos = event->pos();
     update();
 }
 
-void TargetOverlay::mouseReleaseEvent(QMouseEvent* event)
+void ScreenOverlay::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
-        QPoint globalPos = event->globalPosition().toPoint();
-        deactivate();
-
-        // Small delay to allow the underlying window to receive focus
-        Q_EMIT targetSelected(globalPos);
+        Q_EMIT clicked(event->globalPosition().toPoint());
     }
 }
 
-void TargetOverlay::mouseMoveEvent(QMouseEvent* event)
+void ScreenOverlay::mouseMoveEvent(QMouseEvent* event)
 {
     m_cursorPos = event->pos();
     update();
 }
 
-void TargetOverlay::keyPressEvent(QKeyEvent* event)
+void ScreenOverlay::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Escape) {
-        deactivate();
         Q_EMIT cancelled();
     }
 }
