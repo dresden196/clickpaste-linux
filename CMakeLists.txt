@@ -21,10 +21,6 @@ include(KDECompilerSettings NO_POLICY_SCOPE)
 find_package(KF6GlobalAccel REQUIRED)
 find_package(LayerShellQt REQUIRED)
 
-# Find libei via pkg-config
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBEI REQUIRED libei-1.0)
-
 # Source files
 set(SOURCES
     src/main.cpp
@@ -60,7 +56,6 @@ add_executable(clickpaste
 
 target_include_directories(clickpaste PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${LIBEI_INCLUDE_DIRS}
 )
 
 target_link_libraries(clickpaste
@@ -69,7 +64,6 @@ target_link_libraries(clickpaste
     Qt6::Widgets
     KF6::GlobalAccel
     LayerShellQt::Interface
-    ${LIBEI_LIBRARIES}
 )
 
 # Install targets

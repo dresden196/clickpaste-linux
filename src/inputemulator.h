@@ -5,10 +5,6 @@
 #include <QString>
 #include <atomic>
 
-struct ei;
-struct ei_seat;
-struct ei_device;
-
 class InputEmulator : public QObject
 {
     Q_OBJECT
@@ -32,17 +28,6 @@ Q_SIGNALS:
     void errorOccurred(const QString& error);
 
 private:
-    bool connectToEI();
-    void disconnectFromEI();
-    bool createKeyboard();
-    void destroyKeyboard();
-
-    void sendKey(uint32_t keycode, bool press);
-    uint32_t charToKeycode(QChar ch, bool& needShift);
-
-    struct ei* m_ei;
-    struct ei_seat* m_seat;
-    struct ei_device* m_keyboard;
     std::atomic<bool> m_cancelled;
     std::atomic<bool> m_typing;
     bool m_initialized;
