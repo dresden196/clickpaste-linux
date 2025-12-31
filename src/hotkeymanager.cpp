@@ -37,11 +37,9 @@ bool HotkeyManager::registerHotkey(const QString& key, Qt::KeyboardModifiers mod
     QKeySequence shortcut(modifiers | keyCode);
 
     // Register with KGlobalAccel
-    KGlobalAccel::self()->setGlobalShortcut(m_action, {shortcut});
+    bool success = KGlobalAccel::setGlobalShortcut(m_action, {shortcut});
 
-    // Check if registration succeeded
-    QList<QKeySequence> registeredShortcuts = KGlobalAccel::self()->globalShortcut(m_action);
-    if (registeredShortcuts.isEmpty() || registeredShortcuts.first().isEmpty()) {
+    if (!success) {
         Q_EMIT registrationFailed(QStringLiteral("Failed to register global hotkey. It may be in use by another application."));
         delete m_action;
         m_action = nullptr;
